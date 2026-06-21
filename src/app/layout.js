@@ -2,6 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/providers/AuthProvider";
+import QueryProvider from "@/providers/QueryProvider"; // ইম্পোর্ট করুন
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -27,18 +28,15 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
-        <AuthProvider>
-          {/* Global Header/Navbar */}
-          <Navbar />
-          
-          {/* Dynamic Main Content */}
-          <main className="flex-grow">
-            {children}
-          </main>
-          
-          {/* Global Footer */}
-          <Footer />
-        </AuthProvider>
+        <QueryProvider> {/* QueryProvider যুক্ত হলো */}
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
