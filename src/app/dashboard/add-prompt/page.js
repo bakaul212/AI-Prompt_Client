@@ -90,7 +90,7 @@ export default function AddPromptPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Target AI Tool</label>
                             <select name="aiTool" required className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-cyan-500 bg-gray-50/50 outline-none transition text-sm">
                                 <option value="ChatGPT">ChatGPT</option>
-                                <option value="Midjourney">Midjourney</option>
+                                <option value="Midjourney">Gemini</option>
                                 <option value="Claude">Claude</option>
                                 <option value="Stable Diffusion">Stable Diffusion</option>
                             </select>
