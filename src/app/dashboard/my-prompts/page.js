@@ -11,22 +11,39 @@ export default function MyPromptsPage() {
     const { user } = useContext(AuthContext);
     const axiosPublic = useAxiosPublic();
 
-    const { data: myPrompts = [], isLoading } = useQuery({
+    // useQuery থেকে 'refetch' নিয়ে আসা হলো যাতে ডিলিটের পর ডেটা সাথে সাথে আপডেট হয়
+    const { data: myPrompts = [], isLoading, refetch } = useQuery({
         queryKey: ['myPrompts', user?.email],
         enabled: !!user?.email, 
         queryFn: async () => {
-            // ভুল ক্যারেক্টার '专' দূর করা হয়েছে
             const res = await axiosPublic.get(`/my-prompts?email=${user?.email}`);
             return res.data;
         }
     });
+
+    // ডিলিট হ্যান্ডলার ফাংশন
+    const handleDelete = async (id) => {
+        const proceed = window.confirm("Are you sure you want to delete this prompt?");
+        if (proceed) {
+            try {
+                const res = await axiosPublic.delete(`/prompt/${id}`);
+                if (res.data.deletedCount > 0) {
+                    alert("🗑️ Prompt deleted successfully!");
+                    refetch(); // টেবিল ডেটা ইনস্ট্যান্ট রিফ্রেশ করবে
+                }
+            } catch (error) {
+                console.error("Error deleting prompt:", error);
+                alert("Something went wrong while deleting.");
+            }
+        }
+    };
 
     return (
         <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div>
                     <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">My Submitted Prompts</h2>
-                    <p className="text-gray-500 text-sm mt-1">Track the approval status and configurations of your AI prompts.</p>
+                    <p className="text-gray-500 text-sm mt-1">Track the approval status, edit, or delete your submitted AI prompts.</p>
                 </div>
                 <Link href="/dashboard/add-prompt" className="bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
                     + Add New Prompt
@@ -47,6 +64,7 @@ export default function MyPromptsPage() {
                                 <th className="px-6 py-4">Price Type</th>
                                 <th className="px-6 py-4">Visibility</th>
                                 <th className="px-6 py-4 text-center">Status</th>
+                                <th className="px-6 py-4 text-center">Actions</th> {/* নতুন কলাম */}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white text-gray-600 font-medium">
@@ -65,6 +83,27 @@ export default function MyPromptsPage() {
                                             {prompt.status || 'pending'}
                                         </span>
                                     </td>
+                                    
+                                    {/* Action Buttons: Edit & Delete */}
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex items-center justify-center gap-3">
+                                            {/* ডাইনামিক এডিট লিংক */}
+                                            <Link 
+                                                href={`/dashboard/edit-prompt/${prompt._id}`}
+                                                className="px-3 py-1.5 text-xs bg-cyan-50 text-cyan-600 hover:bg-cyan-100 font-bold rounded-lg transition-colors flex items-center gap-1"
+                                            >
+                                                ✏️ Edit
+                                            </Link>
+                                            
+                                            {/* ডিলিট বাটন */}
+                                            <button 
+                                                onClick={() => handleDelete(prompt._id)}
+                                                className="px-3 py-1.5 text-xs bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-lg transition-colors flex items-center gap-1"
+                                            >
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -72,7 +111,7 @@ export default function MyPromptsPage() {
                 </div>
             ) : (
                 <div className="text-center py-16 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                    <p className="text-gray-400 font-medium">You haven't submitted any prompts yet.</p>
+                    <p className="text-gray-400 font-medium">You have not submitted any prompts yet.</p>
                     <p className="text-gray-400 text-xs mt-1">Click the button above to create your first asset!</p>
                 </div>
             )}
