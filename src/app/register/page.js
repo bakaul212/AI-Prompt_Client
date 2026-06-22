@@ -1,4 +1,3 @@
-// client/src/app/register/page.js
 'use client';
 
 import { useState, useContext } from 'react';
@@ -25,7 +24,7 @@ export default function RegisterPage() {
         const password = form.password.value;
 
         try {
-            // ১. ফায়ারবেস দিয়ে ইউজার তৈরি
+            // ১. ফায়ারবেস দিয়ে ইউজার তৈরি
             const result = await createUserWithEmailAndPassword(auth, email, password);
             
             // ২. প্রোফাইল আপডেট (Name & Photo)
@@ -34,9 +33,22 @@ export default function RegisterPage() {
                 photoURL: photoURL
             });
 
-            toast.success('Registration Successful!');
-            form.reset();
-            router.push('/'); // হোম পেজে রিডাইরেক্ট
+            // ৩. মঙ্গোডিবি ব্যাকএন্ডে ডেটা পাঠানো (যোগ করা হলো)
+            const saveUser = { name, email, photoURL };
+            const res = await fetch('http://localhost:5000/users', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify(saveUser)
+            });
+            const data = await res.json();
+
+            if (data.insertedId || data.message === 'user already exists') {
+                toast.success('Registration & Database Sync Successful!');
+                form.reset();
+                router.push('/'); // হোম পেজে রিডাইরেক্ট
+            }
         } catch (error) {
             toast.error(error.message || 'Registration failed.');
         } finally {
@@ -46,7 +58,23 @@ export default function RegisterPage() {
 
     const handleGoogleLogin = async () => {
         try {
-            await signInWithGoogle();
+            const result = await signInWithGoogle();
+            
+            // গুগল লগইনের ডেটাও মঙ্গোডিবি ডাটাবেজে সিঙ্ক করা (যোগ করা হলো)
+            const saveUser = {
+                name: result?.user?.displayName || "Google User",
+                email: result?.user?.email,
+                photoURL: result?.user?.photoURL || ""
+            };
+
+            await fetch('http://localhost:5000/users', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify(saveUser)
+            });
+
             toast.success('Logged in with Google!');
             router.push('/');
         } catch (error) {

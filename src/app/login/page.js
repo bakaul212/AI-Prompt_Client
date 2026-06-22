@@ -1,4 +1,3 @@
-// client/src/app/login/page.js
 'use client';
 
 import { useState, useContext } from 'react';
@@ -26,7 +25,7 @@ export default function LoginPage() {
             await signInWithEmailAndPassword(auth, email, password);
             toast.success('Login Successful!');
             form.reset();
-            router.push('/'); // লগইন সফল হলে হোমে যাবে
+            router.push('/'); 
         } catch (error) {
             toast.error(error.message || 'Invalid email or password.');
         } finally {
@@ -36,7 +35,23 @@ export default function LoginPage() {
 
     const handleGoogleLogin = async () => {
         try {
-            await signInWithGoogle();
+            const result = await signInWithGoogle();
+            
+            // গুগল দিয়ে লগইন করলেও যেন মঙ্গোডিবি ডাটাবেজে ইউজার স্টোর হয় (যোগ করা হলো)
+            const saveUser = {
+                name: result?.user?.displayName || "Google User",
+                email: result?.user?.email,
+                photoURL: result?.user?.photoURL || ""
+            };
+
+            await fetch('http://localhost:5000/users', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify(saveUser)
+            });
+
             toast.success('Logged in successfully!');
             router.push('/');
         } catch (error) {
