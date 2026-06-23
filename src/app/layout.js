@@ -1,8 +1,7 @@
-// client/src/app/layout.js
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/providers/AuthProvider";
-import QueryProvider from "@/providers/QueryProvider"; // ইম্পোর্ট করুন
+import QueryProvider from "@/providers/QueryProvider"; 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -17,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "AI Prompt Sharing & Marketplace Platform",
-  description: "Discover, create, and share high-quality AI prompts.",
+  title: "PromptForge | Premium AI Prompt Marketplace",
+  description: "Discover, adapt, and deploy industry-grade AI prompt engineering templates.",
 };
 
 export default function RootLayout({ children }) {
@@ -27,8 +26,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
-        <QueryProvider> {/* QueryProvider যুক্ত হলো */}
+      {/* #0a0d14 এবং #0f1423 এর একটি মিক্সড ডার্ক অবসিডিয়ান থিম, যা ডেমো থেকে আলাদা কিন্তু চরম মডার্ন */}
+      <body className="min-h-full flex flex-col bg-gradient-to-br from-[#0a0d14] via-[#0d111a] to-[#121824] text-slate-100 selection:bg-indigo-500 selection:text-white">
+        <QueryProvider>
           <AuthProvider>
             <Navbar />
             <main className="flex-grow">

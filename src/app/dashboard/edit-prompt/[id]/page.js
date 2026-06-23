@@ -12,23 +12,35 @@ export default function EditPromptPage() {
     const { id } = useParams(); 
     const { user } = useContext(AuthContext);
 
-    // ১. ডাটাবেজ থেকে এই নির্দিষ্ট প্রম্পটের ডেটা আনা
+    // ১. ডাটাবেজ থেকে নির্দিষ্ট প্রম্পটের ডেটা আনা (টোকেন হেডার সহ)
     const { data: prompt, isLoading } = useQuery({
         queryKey: ['prompt', id],
         queryFn: async () => {
-            const res = await axiosPublic.get(`/prompt/${id}`);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+            const res = await axiosPublic.get(`/prompt/${id}`, {
+                headers: {
+                    authorization: `Bearer ${token}`
+                }
+            });
             return res.data;
         }
     });
 
-    // ফর্ম স্টেট (এখানে শুধু ইউজার যে ফিল্ডগুলো পরিবর্তন করবে সেগুলো ট্র্যাক হবে)
+    // ফর্ম স্টেট
     const [userChanges, setUserChanges] = useState({});
 
-    // ২. রিঅ্যাক্ট কোয়েরি মিউটেশন দিয়ে ডেটা আপডেট
+    // ২. রিঅ্যাক্ট কোয়েরি মিউটেশন দিয়ে ডেটা আপডেট (টোকেন হেডার সহ)
     const updatePromptMutation = useMutation({
         mutationFn: async (updatedPrompt) => {
             const { _id, creatorEmail, creatorName, createdAt, status, ...cleanData } = updatedPrompt;
-            const res = await axiosPublic.put(`/prompt/${id}`, cleanData);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+            
+            // রিকোয়েস্টের সাথে headers পাস করা হলো যাতে verifyToken সফল হয়
+            const res = await axiosPublic.put(`/prompt/${id}`, cleanData, {
+                headers: {
+                    authorization: `Bearer ${token}`
+                }
+            });
             return res.data;
         },
         onSuccess: (data) => {
@@ -54,7 +66,6 @@ export default function EditPromptPage() {
         }));
     };
 
-    // বর্তমান মান (ডাটাবেজের অরিজিনাল ডেটা + ইউজারের করা পরিবর্তন) একসাথে করা
     const currentFormData = {
         title: prompt?.title || '',
         description: prompt?.description || '',
@@ -63,7 +74,7 @@ export default function EditPromptPage() {
         priceType: prompt?.priceType || 'Free',
         price: prompt?.price || 0,
         visibility: prompt?.visibility || 'Public',
-        ...userChanges // ইউজার কিছু টাইপ করলে সেটা এখানে ওভাররাইড হবে
+        ...userChanges 
     };
 
     const handleSubmit = (e) => {
@@ -191,7 +202,7 @@ export default function EditPromptPage() {
                     <button
                         type="button"
                         onClick={() => router.push('/dashboard/my-prompts')}
-                        className="flex-1 bg-gray-100 hover:bg-gray-250 text-gray-700 font-bold py-3 rounded-xl transition-colors text-sm"
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors text-sm"
                     >
                         Cancel
                     </button>

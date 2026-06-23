@@ -1,35 +1,44 @@
-// client/src/app/dashboard/my-prompts/page.js
 'use client';
 
 import { useContext } from 'react';
 import { AuthContext } from '@/providers/AuthProvider';
 import { useQuery } from '@tanstack/react-query';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+import useAxiosPublic from '@/hooks/useAxiosPublic'; // এখানে আপনার সঠিক useAxiosPublic হুকটি দেওয়া হলো
 import Link from 'next/link';
 
 export default function MyPromptsPage() {
     const { user } = useContext(AuthContext);
-    const axiosPublic = useAxiosPublic();
+    const axiosPublic = useAxiosPublic(); // কাস্টম হুকটি কল করা হলো
 
-    // useQuery থেকে 'refetch' নিয়ে আসা হলো যাতে ডিলিটের পর ডেটা সাথে সাথে আপডেট হয়
+    //useQuery দিয়ে ডাটা ফেচিং এবং রিকোয়ারমেন্ট অনুযায়ী JWT টোকেন পাস
     const { data: myPrompts = [], isLoading, refetch } = useQuery({
         queryKey: ['myPrompts', user?.email],
         enabled: !!user?.email, 
         queryFn: async () => {
-            const res = await axiosPublic.get(`/my-prompts?email=${user?.email}`);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+            const res = await axiosPublic.get(`/my-prompts?email=${user?.email}`, {
+                headers: {
+                    authorization: `Bearer ${token}` // সিকিউরিটির জন্য হেডার পাঠানো হচ্ছে
+                }
+            });
             return res.data;
         }
     });
 
-    // ডিলিট হ্যান্ডলার ফাংশন
+    // ডিলিট হ্যান্ডলার ফাংশন (টোকেন হেডারসহ)
     const handleDelete = async (id) => {
         const proceed = window.confirm("Are you sure you want to delete this prompt?");
         if (proceed) {
             try {
-                const res = await axiosPublic.delete(`/prompt/${id}`);
+                const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+                const res = await axiosPublic.delete(`/prompt/${id}`, {
+                    headers: {
+                        authorization: `Bearer ${token}` // সিকিউরিটির জন্য হেডার পাঠানো হচ্ছে
+                    }
+                });
                 if (res.data.deletedCount > 0) {
                     alert("🗑️ Prompt deleted successfully!");
-                    refetch(); // টেবিল ডেটা ইনস্ট্যান্ট রিফ্রেশ করবে
+                    refetch(); // টেবিল ডেটা সাথে সাথে রিফ্রেশ করবে
                 }
             } catch (error) {
                 console.error("Error deleting prompt:", error);
@@ -64,7 +73,7 @@ export default function MyPromptsPage() {
                                 <th className="px-6 py-4">Price Type</th>
                                 <th className="px-6 py-4">Visibility</th>
                                 <th className="px-6 py-4 text-center">Status</th>
-                                <th className="px-6 py-4 text-center">Actions</th> {/* নতুন কলাম */}
+                                <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white text-gray-600 font-medium">
@@ -83,19 +92,14 @@ export default function MyPromptsPage() {
                                             {prompt.status || 'pending'}
                                         </span>
                                     </td>
-                                    
-                                    {/* Action Buttons: Edit & Delete */}
                                     <td className="px-6 py-4 text-center">
                                         <div className="flex items-center justify-center gap-3">
-                                            {/* ডাইনামিক এডিট লিংক */}
                                             <Link 
                                                 href={`/dashboard/edit-prompt/${prompt._id}`}
                                                 className="px-3 py-1.5 text-xs bg-cyan-50 text-cyan-600 hover:bg-cyan-100 font-bold rounded-lg transition-colors flex items-center gap-1"
                                             >
                                                 ✏️ Edit
                                             </Link>
-                                            
-                                            {/* ডিলিট বাটন */}
                                             <button 
                                                 onClick={() => handleDelete(prompt._id)}
                                                 className="px-3 py-1.5 text-xs bg-red-50 text-red-600 hover:bg-red-100 font-bold rounded-lg transition-colors flex items-center gap-1"

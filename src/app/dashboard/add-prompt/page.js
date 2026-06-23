@@ -1,4 +1,3 @@
-// client/src/app/dashboard/add-prompt/page.js
 'use client';
 
 import { useState, useContext } from 'react';
@@ -25,29 +24,41 @@ export default function AddPromptPage() {
         setLoading(true);
         const form = e.target;
         
+        // প্রম্পট অবজেক্ট কনফিগারেশন এবং রিকোয়ারমেন্ট অনুসারে ডাটা কাস্টিং
         const promptInfo = {
             title: form.title.value,
             description: form.description.value,
             category: form.category.value,
             aiTool: form.aiTool.value,
             priceType: priceType,
-            price: priceType === 'Premium' ? form.price.value : 0,
+            price: priceType === 'Premium' ? parseFloat(form.price.value) || 0 : 0,
             visibility: form.visibility.value,
             creatorEmail: user?.email,
-            creatorName: user?.displayName
+            creatorName: user?.displayName,
+            status: 'pending' // ডিফল্ট স্ট্যাটাস সেট করা হলো
         };
 
         try {
-            const res = await axiosPublic.post('/add-prompt', promptInfo);
+            // লোকাল স্টোরেজ থেকে JWT টোকেন নিয়ে হেডারে পাস করা হলো
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+            
+            const res = await axiosPublic.post('/add-prompt', promptInfo, {
+                headers: {
+                    authorization: `Bearer ${token}` // JWT API সিকিউরিটি রিকোয়ারমেন্ট
+                }
+            });
+            
             if (res.data.insertedId) {
                 toast.success('Prompt submitted successfully! Waiting for admin approval.');
                 form.reset();
                 setPriceType('Free');
-                setTimeout(() => router.push('/all-prompts'), 2000);
+                setTimeout(() => router.push('/dashboard/my-prompts'), 2000); // সাকসেস হলে ড্যাশবোর্ড ট্র্যাকিং পেজে রিডাইরেক্ট করবে
             }
         } catch (error) {
-            toast.error('Something went wrong. Please try again.');
+            console.error("Submission failed:", error);
+            toast.error(error.response?.data?.message || 'Something went wrong. Please try again.');
         } finally {
+            // লোডিং স্টেট রিলিজ করা
             setLoading(false);
         }
     };
@@ -90,7 +101,7 @@ export default function AddPromptPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Target AI Tool</label>
                             <select name="aiTool" required className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-cyan-500 bg-gray-50/50 outline-none transition text-sm">
                                 <option value="ChatGPT">ChatGPT</option>
-                                <option value="Midjourney">Gemini</option>
+                                <option value="Gemini">Gemini</option>
                                 <option value="Claude">Claude</option>
                                 <option value="Stable Diffusion">Stable Diffusion</option>
                             </select>
@@ -111,7 +122,6 @@ export default function AddPromptPage() {
                             </select>
                         </div>
 
-                        {/* ডায়নামিক ফিল্ড: শুধুমাত্র Premium সিলেক্ট করলে ওপেন হবে */}
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (USD)</label>
                             <input 
