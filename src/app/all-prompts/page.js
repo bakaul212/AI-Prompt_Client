@@ -1,150 +1,223 @@
 'use client';
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import useAxiosPublic from '@/hooks/useAxiosPublic';
-import PromptCard from '@/components/PromptCard';
-import { IoSearchOutline, IoArrowForwardOutline, IoArrowBackOutline } from 'react-icons/io5';
+import Link from 'next/link';
+import { IoSearchOutline, IoFilterOutline, IoCopyOutline, IoEyeOutline, IoSparklesOutline } from 'react-icons/io5';
 
 export default function AllPromptsPage() {
-    const axiosPublic = useAxiosPublic();
-    const searchParams = useSearchParams();
+  const axiosPublic = useAxiosPublic();
+  
+  // State Management
+  const [prompts, setPrompts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [aiTool, setAiTool] = useState('');
+  const [difficulty, setDifficulty] = useState('');
+  const [sort, setSort] = useState('latest');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-    const initialSearch = searchParams.get('search') || '';
+  // static options for filters
+  const categories = ["Web Development", "Content Writing", "Data Science", "Design", "Marketing"];
+  const aiTools = ["ChatGPT", "Midjourney", "Claude", "Gemini", "Stable Diffusion"];
+  const difficulties = ["Beginner", "Intermediate", "Advanced", "Expert"];
 
-    const [search, setSearch] = useState(initialSearch);
-    const [category, setCategory] = useState('');
-    const [aiTool, setAiTool] = useState('');
-    const [sort, setSort] = useState('newest');
-    const [page, setPage] = useState(1);
-    const limit = 6;
-
-    const { data, isLoading } = useQuery({
-        queryKey: ['allPrompts', search, category, aiTool, sort, page],
-        queryFn: async () => {
-            const res = await axiosPublic.get(`/all-prompts`, {
-                params: { page, limit, search, category, aiTool, sort }
-            });
-            return res.data;
-        }
-    });
-
-    const prompts = data?.prompts || [];
-    const totalPages = data?.totalPages || 1;
-
-    const handleFilterChange = (setter, value) => {
-        setter(value);
-        setPage(1);
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      setLoading(true);
+      try {
+        // সার্ভার সাইড ফিল্টারিং কুয়েরি ইউআরএল জেনারেট করা
+        const res = await axiosPublic.get(`/marketplace-prompts`, {
+          params: {
+            search,
+            category,
+            aiTool,
+            difficulty,
+            sort,
+            page,
+            limit: 6
+          }
+        });
+        setPrompts(res.data.prompts || []);
+        setTotalPages(res.data.totalPages || 1);
+      } catch (error) {
+        console.error("Error connecting to matrix terminal:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    return (
-        <div className="min-h-screen bg-[#0a0d14] py-16 px-4 sm:px-6 lg:px-8 text-white relative">
-            <div className="absolute top-20 left-1/4 w-80 h-80 bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+    // Debouncing or immediate fetch on change
+    const delayDebounceFn = setTimeout(() => {
+      fetchPrompts();
+    }, 400);
 
-            <div className="max-w-7xl mx-auto relative z-10">
-                {/* Header */}
-                <div className="mb-12 text-center sm:text-left">
-                    <h1 className="text-3xl font-black text-white tracking-tight">Central Prompt Database</h1>
-                    <p className="text-slate-400 text-xs mt-1 font-mono">Query production-ready blueprints across active AI units</p>
-                </div>
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, category, aiTool, difficulty, sort, page, axiosPublic]);
 
-                {/* Filters Row */}
-                <div className="bg-[#0f1423]/40 p-4 rounded-xl border border-slate-800/80 backdrop-blur-md flex flex-col gap-4 lg:flex-row lg:items-center justify-between mb-10">
-                    {/* Search Field */}
-                    <div className="relative flex-grow max-w-xl">
-                        <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => handleFilterChange(setSearch, e.target.value)}
-                            placeholder="Identify index by tag, tool name or parameter..."
-                            className="w-full pl-11 pr-4 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-lg focus:outline-none focus:border-indigo-500/50 transition-all text-xs text-slate-200 placeholder-slate-500"
-                        />
-                    </div>
+  return (
+    <div className="min-h-screen bg-[#0a0d14] text-slate-100 py-20 px-4 md:px-8 relative">
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-                    {/* Select Dropdowns */}
-                    <div className="grid grid-cols-2 sm:flex flex-wrap gap-2.5 text-xs">
-                        <select 
-                            value={category} 
-                            onChange={(e) => handleFilterChange(setCategory, e.target.value)}
-                            className="bg-slate-900 border border-slate-800 px-3 py-2.5 rounded-lg outline-none text-slate-300 focus:border-indigo-500/40"
-                        >
-                            <option value="">All Categories</option>
-                            <option value="Coding">Coding</option>
-                            <option value="Writing">Writing</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
-                        </select>
-
-                        <select 
-                            value={aiTool} 
-                            onChange={(e) => handleFilterChange(setAiTool, e.target.value)}
-                            className="bg-slate-900 border border-slate-800 px-3 py-2.5 rounded-lg outline-none text-slate-300 focus:border-indigo-500/40"
-                        >
-                            <option value="">All Systems</option>
-                            <option value="ChatGPT">ChatGPT</option>
-                            <option value="Midjourney">Midjourney</option>
-                            <option value="Claude">Claude</option>
-                            <option value="Stable Diffusion">Stable Diffusion</option>
-                        </select>
-
-                        <select 
-                            value={sort} 
-                            onChange={(e) => setSort(e.target.value)}
-                            className="bg-slate-900 border border-slate-800 px-3 py-2.5 rounded-lg outline-none text-slate-300 focus:border-indigo-500/40 col-span-2 sm:col-span-1"
-                        >
-                            <option value="newest">Chronological Order</option>
-                            <option value="price-low">Value: Low to High</option>
-                            <option value="price-high">Value: High to Low</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* Content Logic */}
-                {isLoading ? (
-                    <div className="flex flex-col justify-center items-center py-24 gap-4">
-                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
-                        <p className="text-xs text-slate-500 font-mono animate-pulse">Syncing datasets...</p>
-                    </div>
-                ) : prompts.length > 0 ? (
-                    <div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {prompts.map((prompt) => (
-                                <PromptCard key={prompt._id} prompt={prompt} />
-                            ))}
-                        </div>
-
-                        {/* Pagination Component */}
-                        <div className="flex justify-center items-center gap-2 mt-16 pt-6 border-t border-slate-900">
-                            <button
-                                onClick={() => setPage(p => Math.max(p - 1, 1))}
-                                disabled={page === 1}
-                                className="p-2 border border-slate-800 bg-slate-900/50 rounded-lg hover:border-slate-700 hover:text-indigo-400 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <IoArrowBackOutline size={16} />
-                            </button>
-                            
-                            <span className="text-xs font-mono text-slate-400 mx-3">
-                                Block {page} / {totalPages}
-                            </span>
-
-                            <button
-                                onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-                                disabled={page === totalPages}
-                                className="p-2 border border-slate-800 bg-slate-900/50 rounded-lg hover:border-slate-700 hover:text-indigo-400 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <IoArrowForwardOutline size={16} />
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="text-center py-20 bg-[#0f1423]/20 border border-slate-800 rounded-xl">
-                        <p className="text-slate-400 font-medium text-sm">No query responses found matching filters.</p>
-                        <p className="text-slate-600 text-xs mt-1">Refine parameters or fallback to active categories.</p>
-                    </div>
-                )}
-            </div>
+      <div className="max-w-7xl mx-auto space-y-10 relative z-10">
+        
+        {/* হেডার সেকশন */}
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white">
+            Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-400">Prompt</span> Matrix
+          </h1>
+          <p className="text-slate-400 text-sm font-mono">// System Registry: Discover and execute vetted algorithmic blueprints.</p>
         </div>
-    );
+
+        {/* সার্চ এবং ফিল্টারিং প্যানেল */}
+        <div className="bg-[#0f1423]/40 border border-slate-800 p-6 rounded-2xl backdrop-blur-md grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          
+          {/* সার্চ ইনপুট */}
+          <div className="md:col-span-4 relative">
+            <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <input
+              type="text"
+              placeholder="Search title or tags..."
+              className="w-full bg-[#07090e] border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-all"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
+
+          {/* ক্যাটাগরি ফিল্টার */}
+          <div className="md:col-span-2">
+            <select
+              className="w-full bg-[#07090e] border border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-400 focus:outline-none focus:border-blue-500"
+              value={category}
+              onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+          </div>
+
+          {/* এআই টুল ফিল্টার */}
+          <div className="md:col-span-2">
+            <select
+              className="w-full bg-[#07090e] border border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-400 focus:outline-none focus:border-blue-500"
+              value={aiTool}
+              onChange={(e) => { setAiTool(e.target.value); setPage(1); }}
+            >
+              <option value="">All AI Tools</option>
+              {aiTools.map((tool) => <option key={tool} value={tool}>{tool}</option>)}
+            </select>
+          </div>
+
+          {/* ডিফিকাল্টি ফিল্টার */}
+          <div className="md:col-span-2">
+            <select
+              className="w-full bg-[#07090e] border border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-400 focus:outline-none focus:border-blue-500"
+              value={difficulty}
+              onChange={(e) => { setDifficulty(e.target.value); setPage(1); }}
+            >
+              <option value="">All Difficulty</option>
+              {difficulties.map((diff) => <option key={diff} value={diff}>{diff}</option>)}
+            </select>
+          </div>
+
+          {/* সর্টিং অপশন */}
+          <div className="md:col-span-2">
+            <select
+              className="w-full bg-[#07090e] border border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-amber-400 font-bold focus:outline-none focus:border-amber-500"
+              value={sort}
+              onChange={(e) => { setSort(e.target.value); setPage(1); }}
+            >
+              <option value="latest">Sort: Latest</option>
+              <option value="popular">Sort: Most Popular</option>
+              <option value="copied">Sort: Most Copied</option>
+            </select>
+          </div>
+
+        </div>
+
+        {/* প্রম্পটস গ্রিড সেকশন */}
+        {loading ? (
+          <div className="text-center py-24 font-mono text-xs text-slate-500 animate-pulse">[LOADING ARRAYS FROM CORE GRID...]</div>
+        ) : prompts.length === 0 ? (
+          <div className="text-center py-24 border border-dashed border-slate-800 rounded-2xl font-mono text-xs text-slate-500">
+            [ZERO INDEX RESULTS]: No matches found for current query matrices.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {prompts.map((prompt) => (
+              <div key={prompt._id} className="group bg-[#0f1423]/20 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between hover:shadow-xl hover:shadow-indigo-500/[0.02]">
+                
+                <div className="space-y-4">
+                  {/* ক্যাটাগরি ও এআই টুল ট্যাগ */}
+                  <div className="flex justify-between items-center text-[10px] font-mono tracking-wider uppercase">
+                    <span className="text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">{prompt.category}</span>
+                    <span className="text-slate-400 bg-slate-800 px-2.5 py-1 rounded-md flex items-center gap-1">
+                      <IoSparklesOutline className="text-amber-400" /> {prompt.aiTool}
+                    </span>
+                  </div>
+
+                  {/* টাইটেল */}
+                  <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
+                    {prompt.title}
+                  </h3>
+
+                  {/* ডেসক্রিপশন স্নীপেট */}
+                  <p className="text-slate-400 text-xs line-clamp-2 leading-relaxed">
+                    {prompt.description || "No validation string metadata provided."}
+                  </p>
+                </div>
+
+                {/* মেটাডাটা ও অ্যাকশন বাটন */}
+                <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-mono">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-slate-500">CREATOR</p>
+                    <p className="text-slate-300 font-bold max-w-[120px] truncate">{prompt.creatorName || "Anonymous Node"}</p>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-slate-400">
+                    <span className="flex items-center gap-1 text-[11px]">
+                      <IoCopyOutline size={14} className="text-slate-500" /> {prompt.copyCount || 0}
+                    </span>
+                    
+                    <Link href={`/prompt/${prompt._id}`}>
+                      <button className="bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 font-bold group-hover:scale-105">
+                        <IoEyeOutline size={14} /> Details
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* পেজিনেশন কন্ট্রোল */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-6 font-mono text-xs">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(p - 1, 1))}
+              className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-all"
+            >
+              &lt; PREV_NODE
+            </button>
+            <span className="text-slate-400">
+              [ PAGE <span className="text-blue-400 font-bold">{page}</span> OF {totalPages} ]
+            </span>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+              className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-all"
+            >
+              NEXT_NODE &gt;
+            </button>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
 }
