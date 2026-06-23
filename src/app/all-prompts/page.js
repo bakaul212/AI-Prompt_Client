@@ -1,22 +1,18 @@
-// client/src/app/all-prompts/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import useAxiosPublic from '@/hooks/useAxiosPublic';
 import PromptCard from '@/components/PromptCard';
-import { IoSearchOutline, IoFilterOutline, IoArrowForwardOutline, IoArrowBackOutline } from 'react-icons/io5';
+import { IoSearchOutline, IoArrowForwardOutline, IoArrowBackOutline } from 'react-icons/io5';
 
 export default function AllPromptsPage() {
     const axiosPublic = useAxiosPublic();
     const searchParams = useSearchParams();
-    const router = useRouter();
 
-    // URL থেকে প্রাথমিক সার্চ ভ্যালু নেওয়া (যদি হোম পেজের ব্যানার থেকে সার্চ করে আসে)
     const initialSearch = searchParams.get('search') || '';
 
-    // States for filtering & pagination
     const [search, setSearch] = useState(initialSearch);
     const [category, setCategory] = useState('');
     const [aiTool, setAiTool] = useState('');
@@ -24,7 +20,6 @@ export default function AllPromptsPage() {
     const [page, setPage] = useState(1);
     const limit = 6;
 
-    // রিঅ্যাক্ট কোয়েরি দিয়ে ডাটা ফেচিং
     const { data, isLoading } = useQuery({
         queryKey: ['allPrompts', search, category, aiTool, sort, page],
         queryFn: async () => {
@@ -38,41 +33,42 @@ export default function AllPromptsPage() {
     const prompts = data?.prompts || [];
     const totalPages = data?.totalPages || 1;
 
-    // ফিল্টার চেঞ্জ হলে পেজ ১-এ রিসেট করা
     const handleFilterChange = (setter, value) => {
         setter(value);
         setPage(1);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-                {/* Top Heading */}
-                <div className="mb-10 text-center sm:text-left">
-                    <h1 className="text-3xl font-extrabold text-gray-950 tracking-tight">Explore All Prompts</h1>
-                    <p className="text-gray-500 mt-1">Find the perfect configurations for your AI workflows.</p>
+        <div className="min-h-screen bg-[#0a0d14] py-16 px-4 sm:px-6 lg:px-8 text-white relative">
+            <div className="absolute top-20 left-1/4 w-80 h-80 bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+            <div className="max-w-7xl mx-auto relative z-10">
+                {/* Header */}
+                <div className="mb-12 text-center sm:text-left">
+                    <h1 className="text-3xl font-black text-white tracking-tight">Central Prompt Database</h1>
+                    <p className="text-slate-400 text-xs mt-1 font-mono">Query production-ready blueprints across active AI units</p>
                 </div>
 
-                {/* Filter and Search Bar Section */}
-                <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-4 lg:flex-row lg:items-center justify-between mb-8">
-                    {/* Search Input */}
+                {/* Filters Row */}
+                <div className="bg-[#0f1423]/40 p-4 rounded-xl border border-slate-800/80 backdrop-blur-md flex flex-col gap-4 lg:flex-row lg:items-center justify-between mb-10">
+                    {/* Search Field */}
                     <div className="relative flex-grow max-w-xl">
-                        <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => handleFilterChange(setSearch, e.target.value)}
-                            placeholder="Search by title, tag, or keywords..."
-                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all text-sm"
+                            placeholder="Identify index by tag, tool name or parameter..."
+                            className="w-full pl-11 pr-4 py-2.5 bg-slate-900/60 border border-slate-800/80 rounded-lg focus:outline-none focus:border-indigo-500/50 transition-all text-xs text-slate-200 placeholder-slate-500"
                         />
                     </div>
 
-                    {/* Dropdown Filters */}
-                    <div className="grid grid-cols-2 sm:flex flex-wrap gap-3 text-sm">
+                    {/* Select Dropdowns */}
+                    <div className="grid grid-cols-2 sm:flex flex-wrap gap-2.5 text-xs">
                         <select 
                             value={category} 
                             onChange={(e) => handleFilterChange(setCategory, e.target.value)}
-                            className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500"
+                            className="bg-slate-900 border border-slate-800 px-3 py-2.5 rounded-lg outline-none text-slate-300 focus:border-indigo-500/40"
                         >
                             <option value="">All Categories</option>
                             <option value="Coding">Coding</option>
@@ -84,9 +80,9 @@ export default function AllPromptsPage() {
                         <select 
                             value={aiTool} 
                             onChange={(e) => handleFilterChange(setAiTool, e.target.value)}
-                            className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500"
+                            className="bg-slate-900 border border-slate-800 px-3 py-2.5 rounded-lg outline-none text-slate-300 focus:border-indigo-500/40"
                         >
-                            <option value="">All AI Tools</option>
+                            <option value="">All Systems</option>
                             <option value="ChatGPT">ChatGPT</option>
                             <option value="Midjourney">Midjourney</option>
                             <option value="Claude">Claude</option>
@@ -96,20 +92,20 @@ export default function AllPromptsPage() {
                         <select 
                             value={sort} 
                             onChange={(e) => setSort(e.target.value)}
-                            className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 col-span-2 sm:col-span-1"
+                            className="bg-slate-900 border border-slate-800 px-3 py-2.5 rounded-lg outline-none text-slate-300 focus:border-indigo-500/40 col-span-2 sm:col-span-1"
                         >
-                            <option value="newest">Newest First</option>
-                            <option value="price-low">Price: Low to High</option>
-                            <option value="price-high">Price: High to Low</option>
+                            <option value="newest">Chronological Order</option>
+                            <option value="price-low">Value: Low to High</option>
+                            <option value="price-high">Value: High to Low</option>
                         </select>
                     </div>
                 </div>
 
-                {/* Content Grid */}
+                {/* Content Logic */}
                 {isLoading ? (
-                    <div className="flex flex-col justify-center items-center py-24 gap-3">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-                        <p className="text-sm text-gray-400 font-medium">Loading prompts database...</p>
+                    <div className="flex flex-col justify-center items-center py-24 gap-4">
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+                        <p className="text-xs text-slate-500 font-mono animate-pulse">Syncing datasets...</p>
                     </div>
                 ) : prompts.length > 0 ? (
                     <div>
@@ -119,33 +115,33 @@ export default function AllPromptsPage() {
                             ))}
                         </div>
 
-                        {/* Pagination Controls */}
-                        <div className="flex justify-center items-center gap-2 mt-12 pt-6 border-t border-gray-200">
+                        {/* Pagination Component */}
+                        <div className="flex justify-center items-center gap-2 mt-16 pt-6 border-t border-slate-900">
                             <button
                                 onClick={() => setPage(p => Math.max(p - 1, 1))}
                                 disabled={page === 1}
-                                className="p-2 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 border border-slate-800 bg-slate-900/50 rounded-lg hover:border-slate-700 hover:text-indigo-400 transition disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                                <IoArrowBackOutline size={18} />
+                                <IoArrowBackOutline size={16} />
                             </button>
                             
-                            <span className="text-sm font-medium text-gray-700 mx-2">
-                                Page {page} of {totalPages}
+                            <span className="text-xs font-mono text-slate-400 mx-3">
+                                Block {page} / {totalPages}
                             </span>
 
                             <button
                                 onClick={() => setPage(p => Math.min(p + 1, totalPages))}
                                 disabled={page === totalPages}
-                                className="p-2 border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-2 border border-slate-800 bg-slate-900/50 rounded-lg hover:border-slate-700 hover:text-indigo-400 transition disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                                <IoArrowForwardOutline size={18} />
+                                <IoArrowForwardOutline size={16} />
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center py-20 bg-white border border-gray-200 rounded-2xl shadow-sm">
-                        <p className="text-gray-400 font-medium text-lg">No prompts matched your criteria.</p>
-                        <p className="text-gray-400 text-sm mt-1">Try resetting filters or changing your search term.</p>
+                    <div className="text-center py-20 bg-[#0f1423]/20 border border-slate-800 rounded-xl">
+                        <p className="text-slate-400 font-medium text-sm">No query responses found matching filters.</p>
+                        <p className="text-slate-600 text-xs mt-1">Refine parameters or fallback to active categories.</p>
                     </div>
                 )}
             </div>
