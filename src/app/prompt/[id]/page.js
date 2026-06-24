@@ -41,7 +41,7 @@ export default function PromptDetailsPage() {
 
   const { prompt = {}, isPremiumUser = false, isBookmarked = false, reviews = [] } = serverPayload;
 
-  // রিকোয়ারমেন্টের মূল শর্ত: পাবলিক নাকি প্রিমিয়াম ভিউ অ্যাক্সেস
+  // রিকোয়ারমেন্টের মূল শর্ত: পাবলিক নাকি প্রিমিয়াম ভিউ অ্যাক্সেস
   const hasAccess = prompt.visibility === 'Public' || isPremiumUser;
 
   // বুকমার্ক টগল মিউটেশন
@@ -89,7 +89,7 @@ export default function PromptDetailsPage() {
         promptId: id,
         name: user?.displayName || "Anonymous Engineer",
         email: user?.email,
-        rating: reviewRating,
+        rating: Number(reviewRating),
         comment: reviewComment
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access-token')}` }
@@ -172,7 +172,7 @@ export default function PromptDetailsPage() {
           <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white mb-4 leading-tight">{prompt.title}</h1>
           <p className="text-sm text-slate-400 font-normal leading-relaxed mb-6">{prompt.description}</p>
 
-          {/* রিকোয়ারমেন্ট অনুযায়ী কাস্টম ট্যাগ্স */}
+          {/* রিকোয়ারমেন্ট অনুযায়ী কাস্টম ট্যাগ্স */}
           {prompt.tags && (
             <div className="flex flex-wrap gap-1.5 mb-8">
               {prompt.tags.split(',').map((tag, i) => (
@@ -208,7 +208,7 @@ export default function PromptDetailsPage() {
                     Subscribe to Premium
                   </button>
                 </div> 
-                </>
+              </div>
             )}
           </div>
 
