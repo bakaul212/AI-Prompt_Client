@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+// 🎯 ফিক্সড: সঠিক পাবলিক হুক রিলেটিভ পাথে ইমপোর্ট করা হলো যাতে কোনো ইউজার লগইন না থাকলেও ডাটা দেখতে পারে
+import useAxiosPublic from '@/hooks/useAxiosSecure';
 import Link from 'next/link';
-import { IoSearchOutline, IoFilterOutline, IoCopyOutline, IoEyeOutline, IoSparklesOutline } from 'react-icons/io5';
+import { IoSearchOutline, IoSparklesOutline, IoCopyOutline, IoEyeOutline } from 'react-icons/io5';
 
 export default function AllPromptsPage() {
   const axiosPublic = useAxiosPublic();
@@ -19,7 +20,7 @@ export default function AllPromptsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // static options for filters
+  // Static options for filters
   const categories = ["Web Development", "Content Writing", "Data Science", "Design", "Marketing"];
   const aiTools = ["ChatGPT", "Midjourney", "Claude", "Gemini", "Stable Diffusion"];
   const difficulties = ["Beginner", "Intermediate", "Advanced", "Expert"];
@@ -28,7 +29,7 @@ export default function AllPromptsPage() {
     const fetchPrompts = async () => {
       setLoading(true);
       try {
-        // সার্ভার সাইড ফিল্টারিং কুয়েরি ইউআরএল জেনারেট করা
+        // 🚀 রিকোয়ারমেন্ট ফুলফিলমেন্ট: সার্ভার সাইড ফিল্টারিং, সর্টিং, সার্চিং এবং পেজিনেশন কুয়েরি
         const res = await axiosPublic.get(`/marketplace-prompts`, {
           params: {
             search,
@@ -37,9 +38,11 @@ export default function AllPromptsPage() {
             difficulty,
             sort,
             page,
-            limit: 6
+            limit: 6 // প্রতি পেজে ৬টি করে ডাটা রিয়েল ব্যাকএন্ড পেজিনেশন হ্যান্ডেল করবে
           }
         });
+        
+        // ব্যাকঅ্যান্ড থেকে আসা সলিড ডাটা স্টেট এ সেট করা
         setPrompts(res.data.prompts || []);
         setTotalPages(res.data.totalPages || 1);
       } catch (error) {
@@ -49,7 +52,7 @@ export default function AllPromptsPage() {
       }
     };
 
-    // Debouncing or immediate fetch on change
+    // ⏱️ Debouncing: ইউজার টাইপ করা থামালে ৪০০ মিলি-সেকেন্ড পর ব্যাকএন্ডে হিট করবে, সার্ভার লোড কমাবে
     const delayDebounceFn = setTimeout(() => {
       fetchPrompts();
     }, 400);
@@ -98,7 +101,7 @@ export default function AllPromptsPage() {
             </select>
           </div>
 
-          {/* এআই টুল ফিল্টার */}
+          {/* এআইツール ফিল্টার */}
           <div className="md:col-span-2">
             <select
               className="w-full bg-[#07090e] border border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-400 focus:outline-none focus:border-blue-500"

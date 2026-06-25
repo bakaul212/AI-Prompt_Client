@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+import useAxiosPublic from '@/hooks/useAxiosSecure';
 import Link from 'next/link';
 import { useState, useContext } from 'react';
 import { toast, ToastContainer } from 'react-toastify';

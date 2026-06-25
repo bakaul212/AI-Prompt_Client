@@ -2,7 +2,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+import useAxiosPublic from '@/hooks/useAxiosSecure';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 

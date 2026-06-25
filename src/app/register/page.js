@@ -8,7 +8,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/firebase/firebase.config';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+import useAxiosPublic from '@/hooks/useAxiosSecure';
 
 export default function RegisterPage() {
     const { signInWithGoogle } = useContext(AuthContext);

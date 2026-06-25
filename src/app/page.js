@@ -7,7 +7,7 @@ import TopCreators from "@/components/TopCreators";
 import CustomerReviews from "@/components/CustomerReviews";
 import StatsSection from "@/components/StatsSection";
 import CTASection from "@/components/CTASection";
-import useAxiosPublic from "@/hooks/useAxiosPublic";
+import useAxiosPublic from "@/hooks/useAxiosSecure";
 import { useQuery } from "@tanstack/react-query";
 
 export default function HomePage() {

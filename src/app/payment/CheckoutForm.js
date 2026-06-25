@@ -2,7 +2,7 @@
 
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState, useEffect } from 'react';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+import useAxiosPublic from '@/hooks/useAxiosSecure';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { IoShieldCheckmarkOutline } from 'react-icons/io5';

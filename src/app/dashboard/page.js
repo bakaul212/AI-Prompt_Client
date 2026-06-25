@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '@/providers/AuthProvider';
-import useAxiosPublic from '@/hooks/useAxiosPublic';
+import useAxiosPublic from '@/hooks/useAxiosSecure';
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

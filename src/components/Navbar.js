@@ -5,7 +5,8 @@ import { useContext } from 'react';
 import { AuthContext } from '@/providers/AuthProvider';
 
 const Navbar = () => {
-    const { user, logOut } = useContext(AuthContext);
+    // এখানে AuthContext থেকে userRole-ও নিয়ে আসা হলো (যদি আপনার প্রোভাইডারে থাকে)
+    const { user, userRole, logOut } = useContext(AuthContext);
 
     return (
         <nav className="bg-[#0a0d14]/70 backdrop-blur-lg border-b border-slate-800/50 text-white p-4 sticky top-0 z-50 transition-all">
@@ -29,8 +30,19 @@ const Navbar = () => {
 
                     {user ? (
                         <>
+                            {/* শুধুমাত্র রোল 'admin' হলেই Admin Panel লিংকটি দৃশ্যমান হবে */}
+                            {userRole === 'admin' && (
+                                <Link 
+                                    href="/admin-dashboard" 
+                                    className="text-xs font-mono text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/10 px-3 py-1.5 rounded-xl transition-all duration-200"
+                                >
+                                    Admin Panel
+                                </Link>
+                            )}
+
                             {/* সঠিক পথ: সরাসরি /dashboard সেট করা হলো */}
                             <Link href="/dashboard" className="hover:text-indigo-400 transition-colors duration-200">Dashboard</Link>
+                            
                             <button 
                                 onClick={logOut} 
                                 className="bg-rose-500/10 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/20 px-4 py-1.5 rounded-xl transition-all duration-300 text-xs font-semibold"
