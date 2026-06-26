@@ -10,21 +10,21 @@ const TopCreators = () => {
     ];
 
     return (
-        <section className="bg-[#0a0d14] px-4 py-24 relative overflow-hidden">
+        <section className="bg-[#0a0d14] px-4 py-16 sm:py-20 md:py-24 relative overflow-hidden">
             <div className="max-w-7xl mx-auto relative z-10">
-                <div className="text-center mb-16">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 shadow-sm">
+                <div className="text-center mb-10 sm:mb-16 px-2">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 sm:px-3 py-1.5 rounded-xl border border-emerald-500/20 shadow-sm">
                         ⚡ Network Core
                     </span>
-                    <h2 className="text-3xl font-black text-white tracking-tight mt-4">
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-3 sm:mt-4">
                         Top Prompt Engineers
                     </h2>
-                    <p className="mt-3 text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
+                    <p className="mt-2.5 sm:mt-3 text-slate-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
                         Identify and collaborate with elite architects translating operational demands into high-tier AI directives.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                     {creators.map((creator, index) => (
                         <motion.div
                             key={index}
@@ -32,18 +32,18 @@ const TopCreators = () => {
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="bg-[#0f1423]/30 backdrop-blur-md border border-slate-800/80 p-6 rounded-2xl shadow-xl text-center flex flex-col items-center h-full hover:border-slate-700/60 transition-all duration-300"
+                            className="bg-[#0f1423]/30 backdrop-blur-md border border-slate-800/80 p-5 sm:p-6 rounded-2xl shadow-xl text-center flex flex-col items-center h-full hover:border-slate-700/60 transition-all duration-300"
                         >
                             <img 
                                 src={creator.image} 
                                 alt={creator.name} 
-                                className="w-16 h-16 rounded-xl object-cover mb-4 ring-2 ring-indigo-500/20 shadow-md"
+                                className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover mb-3 sm:mb-4 ring-2 ring-indigo-500/20 shadow-md"
                             />
-                            <h3 className="text-base font-bold text-slate-200 tracking-tight">{creator.name}</h3>
-                            <p className="text-[10px] text-indigo-400 font-mono bg-indigo-500/5 border border-indigo-500/10 px-2.5 py-1 rounded-md mt-1.5 uppercase tracking-wider">
+                            <h3 className="text-sm sm:text-base font-bold text-slate-200 tracking-tight">{creator.name}</h3>
+                            <p className="text-[9px] sm:text-[10px] text-indigo-400 font-mono bg-indigo-500/5 border border-indigo-500/10 px-2.5 py-1 rounded-md mt-1.5 uppercase tracking-wider max-w-[180px] truncate">
                                 {creator.role}
                             </p>
-                            <div className="mt-5 pt-4 border-t border-slate-800/80 w-full text-xs text-slate-400 font-normal">
+                            <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-800/80 w-full text-[11px] sm:text-xs text-slate-400 font-normal">
                                 Verified Repositories: <span className="font-bold text-slate-200">{creator.prompts}</span>
                             </div>
                         </motion.div>
