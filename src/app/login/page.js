@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useContext } from 'react';
+// 🛠️ useEffect ইমপোর্ট করা হয়েছে
+import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -16,17 +17,37 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const axiosPublic = useAxiosPublic();
 
+    // 🛠️ ডেমো ইউজারের ডেটা অটো-ফিলের জন্য নতুন স্টেট ডিক্লেয়ার করা হলো
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    // 🛠️ ডেমো ইউজার ম্যাট্রিক্স থেকে ডেটা ক্যাচ করার জন্য useEffect হুক
+    useEffect(() => {
+        const demoEmail = localStorage.getItem('demo-login-email');
+        const demoPass = localStorage.getItem('demo-login-pass');
+        
+        if (demoEmail && demoPass) {
+            setEmail(demoEmail);
+            setPassword(demoPass);
+            
+            toast.success('Matrix Credentials Synced Successfully! ⚡', { autoClose: 2000 });
+
+            // একবারে কাজ শেষ হয়ে গেলে স্টোরেজ ক্লিন করে ফেলা হলো
+            localStorage.removeItem('demo-login-email');
+            localStorage.removeItem('demo-login-pass');
+        }
+    }, []);
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const form = e.target;
-        const email = form.email.value;
-        const password = form.password.value;
 
         try {
+            // 🛠️ স্টেট থেকে সরাসরি ভ্যালু নেওয়া হচ্ছে
             await signInWithEmailAndPassword(auth, email, password);
             toast.success('Access Granted! Welcome Back.');
-            form.reset();
+            setEmail('');
+            setPassword('');
             router.push('/'); 
         } catch (error) {
             toast.error(error.message || 'Authentication failed. Please verify credentials.');
@@ -45,7 +66,6 @@ export default function LoginPage() {
                 photoURL: result?.user?.photoURL || ""
             };
 
-            // লোকাল হোস্টের পরিবর্তে কাস্টম axiosPublic ব্যবহার করা হলো সিকিউরিটির জন্য
             await axiosPublic.post('/users', saveUser);
 
             toast.success('Logged in securely with Google!');
@@ -68,11 +88,29 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin} className="space-y-4">
                     <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Email Address</label>
-                        <input type="email" name="email" required className="w-full px-4 py-2.5 rounded-xl bg-[#0a0d14] border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm" placeholder="name@example.com" />
+                        {/* 🛠️ value এবং onChange যুক্ত করা হয়েছে ডেমো ডেটা বাইন্ডিংয়ের জন্য */}
+                        <input 
+                            type="email" 
+                            name="email" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required 
+                            className="w-full px-4 py-2.5 rounded-xl bg-[#0a0d14] border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm" 
+                            placeholder="name@example.com" 
+                        />
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">Password</label>
-                        <input type="password" name="password" required className="w-full px-4 py-2.5 rounded-xl bg-[#0a0d14] border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm" placeholder="••••••••" />
+                        {/* 🛠️ value এবং onChange যুক্ত করা হয়েছে ডেমো ডেটা বাইন্ডিংয়ের জন্য */}
+                        <input 
+                            type="password" 
+                            name="password" 
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required 
+                            className="w-full px-4 py-2.5 rounded-xl bg-[#0a0d14] border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm" 
+                            placeholder="••••••••" 
+                        />
                     </div>
                     
                     <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-90 text-white font-semibold py-2.5 rounded-xl shadow-[0_4px_12px_rgba(99,102,241,0.2)] transition-all text-sm mt-6">

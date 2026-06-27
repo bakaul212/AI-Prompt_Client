@@ -9,11 +9,10 @@ import { IoDiamondOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// আপনার স্ট্রাইপ পাবলিশেবল কী (Publishable Key) এখানে বসাবেন
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
 
 export default function PaymentPage() {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
   const premiumBenefits = [
     "Instant decryption of all Private & Premium Prompts",
@@ -23,6 +22,14 @@ export default function PaymentPage() {
     "Verified VIP Architect tier badge on global reviews"
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0d14] flex justify-center items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-100 py-24 px-4 relative overflow-hidden">
       <ToastContainer theme="dark" />
@@ -30,7 +37,7 @@ export default function PaymentPage() {
 
       <div className="max-w-4xl mx-auto relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         
-        {/* বাম পাশ: প্ল্যান ডিটেইলস ও বেনিফিট */}
+        {/* বাম পাশ: প্ল্যান ডিটেইলস */}
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-mono uppercase tracking-widest px-3 py-1.5 rounded-lg">
             <IoDiamondOutline className="animate-pulse" /> High-Tier Matrix Access
@@ -66,12 +73,13 @@ export default function PaymentPage() {
           
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-6 font-mono">/Payment Gateway Authentication</h3>
           
-          {user ? (
+          {user?.email ? (
+            /* এখানে আর কোনো কন্ডিশনাল লক থাকবে না, সরাসরি এলিমেন্টস লোড হবে */
             <Elements stripe={stripePromise}>
-              <CheckoutForm price={5} userEmail={user?.email} />
+              <CheckoutForm price={5} userEmail={user.email} />
             </Elements>
           ) : (
-            <div className="text-center py-10 text-xs text-slate-500 font-mono">
+            <div className="text-center py-10 text-xs text-rose-400 font-mono">
               [CRITICAL ERROR]: Primary session missing. Please log in to authorize payment node.
             </div>
           )}

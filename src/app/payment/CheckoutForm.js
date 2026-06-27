@@ -2,7 +2,7 @@
 
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState, useEffect } from 'react';
-import useAxiosPublic from '@/hooks/useAxiosSecure';
+import useAxiosPublic from '@/hooks/useAxiosSecure'; // আপনার দেওয়া কাস্টম হুক
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { IoShieldCheckmarkOutline } from 'react-icons/io5';
@@ -15,27 +15,38 @@ export default function CheckoutForm({ price, userEmail }) {
 
   const [clientSecret, setClientSecret] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true); // নতুন স্টেট লোডিং ট্র্যাকিংয়ের জন্য
   const [errorMessage, setErrorMessage] = useState('');
 
-  // পেইজ লোড হওয়ার সাথে সাথে ব্যাক-এন্ড থেকে ক্লায়েন্ট সিক্রেট নিয়ে আসা
   useEffect(() => {
-    if (price > 0) {
+    if (price > 0 && userEmail) {
+      setInitialLoading(true);
       axiosPublic.post('/create-payment-intent', { price }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access-token')}` }
       })
       .then(res => {
-        setClientSecret(res.data.clientSecret);
+        if (res.data?.clientSecret) {
+          setClientSecret(res.data.clientSecret);
+          setErrorMessage('');
+        } else {
+          setErrorMessage('Invalid handshaking from server endpoint.');
+        }
+        setInitialLoading(false);
       })
       .catch(err => {
-        setErrorMessage('Failed to initialize payment gateway.');
+        setErrorMessage('Failed to initialize payment gateway token.');
+        setInitialLoading(false);
       });
     }
-  }, [price, axiosPublic]);
+  }, [price, userEmail, axiosPublic]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || !clientSecret) {
+      toast.error("Payment pipeline has not finished compilation.");
+      return;
+    }
 
     const card = elements.getElement(CardElement);
     if (card == null) return;
@@ -43,7 +54,7 @@ export default function CheckoutForm({ price, userEmail }) {
     setProcessing(true);
     setErrorMessage('');
 
-    // কার্ড ভ্যালিডেশন চেক
+    // স্ট্রাইপ পেমেন্ট মেথড তৈরি
     const { error, paymentMethod } = await stripe.createPaymentMethod({
       type: 'card',
       card,
@@ -55,7 +66,7 @@ export default function CheckoutForm({ price, userEmail }) {
       return;
     }
 
-    // পেমেন্ট কনফার্মেশন প্রসেস
+    // পেমেন্ট কনফার্মেশন
     const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(
       clientSecret,
       {
@@ -77,8 +88,8 @@ export default function CheckoutForm({ price, userEmail }) {
     if (paymentIntent.status === 'succeeded') {
       toast.success(`Transaction Authorized! ID: ${paymentIntent.id}`);
       
-      // ব্যাক-এন্ডে সফল পেমেন্ট ডাটা পাঠানো ও রোল আপগ্রেড করা
       try {
+        // ডাটাবেজে পেমেন্ট সাকসেস স্টেট পাঠানো
         const res = await axiosPublic.post('/payment-success', {
           transactionId: paymentIntent.id,
           email: userEmail,
@@ -90,7 +101,7 @@ export default function CheckoutForm({ price, userEmail }) {
         if (res.data.success) {
           toast.success("Subscription upgraded to Premium grid permanently.");
           setTimeout(() => {
-            router.back(); // আগের পেইজে ফেরত পাঠানো
+            router.push('/dashboard'); // অথবা আপনার হোম রাউট
           }, 2000);
         }
       } catch (dbErr) {
@@ -102,31 +113,40 @@ export default function CheckoutForm({ price, userEmail }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 bg-[#07090e] border border-slate-800 rounded-xl shadow-inner">
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '14px',
-                color: '#f8fafc',
-                fontFamily: 'monospace, sans-serif',
-                '::placeholder': { color: '#64748b' },
+      
+      {/* যদি ব্যাকএন্ড থেকে টোকেন লোড হতে থাকে */}
+      {initialLoading ? (
+        <div className="text-center py-6 text-xs text-amber-400 font-mono animate-pulse bg-[#07090e] border border-slate-800/50 rounded-xl">
+          [CONNECTING]: Fetching secure authorization link from network node...
+        </div>
+      ) : (
+        /* টোকেন চলে আসলে কার্ড ইনপুট ফিল্ড দেখাবে */
+        <div className="p-4 bg-[#07090e] border border-slate-800 rounded-xl shadow-inner">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: '14px',
+                  color: '#f8fafc',
+                  fontFamily: 'monospace, sans-serif',
+                  '::placeholder': { color: '#64748b' },
+                },
+                invalid: { color: '#f43f5e' },
               },
-              invalid: { color: '#f43f5e' },
-            },
-          }}
-        />
-      </div>
+            }}
+          />
+        </div>
+      )}
 
       {errorMessage && (
-        <p className="text-xs font-mono text-rose-500 bg-rose-500/5 p-3 rounded-lg border border-rose-500/10">
+        <div className="text-xs font-mono text-rose-500 bg-rose-500/5 p-3 rounded-lg border border-rose-500/10">
           ⚠️ {errorMessage}
-        </p>
+        </div>
       )}
 
       <button
         type="submit"
-        disabled={!stripe || !clientSecret || processing}
+        disabled={!stripe || !clientSecret || processing || initialLoading}
         className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-black font-black text-xs py-3.5 px-6 rounded-xl shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none"
       >
         <IoShieldCheckmarkOutline size={16} />

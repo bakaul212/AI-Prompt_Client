@@ -16,7 +16,6 @@ export default function PromptDetailsPage() {
   const axiosPublic = useAxiosPublic();
   const queryClient = useQueryClient();
   
-  // গ্লোবাল সেশন থেকে রিয়েল ইউজার ডাটা ইন্টিগ্রেশন
   const { user } = useContext(AuthContext);
 
   const [copied, setCopied] = useState(false);
@@ -27,7 +26,6 @@ export default function PromptDetailsPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
 
-  // ডাটা ফেচিং
   const { data: serverPayload = {}, isLoading } = useQuery({
     queryKey: ['promptDetails', id, user?.email],
     queryFn: async () => {
@@ -41,10 +39,8 @@ export default function PromptDetailsPage() {
 
   const { prompt = {}, isPremiumUser = false, isBookmarked = false, reviews = [] } = serverPayload;
 
-  // রিকোয়ারমেন্টের মূল শর্ত: পাবলিক নাকি প্রিমিয়াম ভিউ অ্যাক্সেস
   const hasAccess = prompt.visibility === 'Public' || isPremiumUser;
 
-  // বুকমার্ক টগল মিউটেশন
   const bookmarkMutation = useMutation({
     mutationFn: async () => {
       const res = await axiosPublic.post('/prompt/bookmark', { promptId: id, userEmail: user?.email }, {
@@ -59,7 +55,6 @@ export default function PromptDetailsPage() {
     }
   });
 
-  // কপি প্রম্পট ও ডাটাবেজ কাউন্টার ট্রিগার
   const handleCopy = async () => {
     if (!hasAccess) {
       toast.error("Execution blocked: Subscription required.");
@@ -79,7 +74,6 @@ export default function PromptDetailsPage() {
     }
   };
 
-  // রিভিউ সাবমিশন
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewComment.trim()) return;
@@ -103,7 +97,6 @@ export default function PromptDetailsPage() {
     }
   };
 
-  // রিপোর্ট সাবমিশন
   const handleReportSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -137,15 +130,13 @@ export default function PromptDetailsPage() {
     <div className="min-h-screen bg-[#0a0d14] text-slate-100 py-12 sm:py-16 md:py-20 px-4 relative overflow-hidden">
       <ToastContainer theme="dark" />
       
-      {/* গ্লো ইফেক্টস */}
       <div className="absolute top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-indigo-500/5 rounded-full blur-[100px] sm:blur-[130px] pointer-events-none"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
         
-        {/* টপ মেটা বার */}
         <div className="flex justify-between items-center mb-6 sm:mb-8 gap-4">
           <Link href="/prompts" className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-indigo-400 transition-colors">
-            ← Central Hub
+            &larr; Central Hub
           </Link>
           
           <div className="flex gap-2 sm:gap-4">
@@ -158,10 +149,8 @@ export default function PromptDetailsPage() {
           </div>
         </div>
 
-        {/* মেইন ডাটা প্যানেল */}
         <div className="backdrop-blur-md bg-[#0f1423]/30 border border-slate-800/80 rounded-2xl p-4 sm:p-6 md:p-10 shadow-2xl mb-6 sm:mb-10">
           
-          {/* ব্যাজ ও লেভেলসমূহ - ফ্লেক্স র‍্যাপ ও ছোট টেক্সট করা হয়েছে */}
           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-5 sm:mb-6">
             <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] sm:text-[10px] font-mono uppercase px-2 sm:px-2.5 py-1 rounded-md">🤖 System: {prompt.aiTool || 'Generic'}</span>
             <span className="bg-slate-900 text-slate-400 border border-slate-800 text-[9px] sm:text-[10px] font-mono uppercase px-2 sm:px-2.5 py-1 rounded-md">📁 Class: {prompt.category || 'Standard'}</span>
@@ -172,7 +161,6 @@ export default function PromptDetailsPage() {
           <h1 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tight text-white mb-3 sm:mb-4 leading-tight">{prompt.title}</h1>
           <p className="text-xs sm:text-sm text-slate-400 font-normal leading-relaxed mb-5 sm:mb-6">{prompt.description}</p>
 
-          {/* কাস্টম ট্যাগ্স */}
           {prompt.tags && (
             <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-6 sm:mb-8">
               {prompt.tags.split(',').map((tag, i) => (
@@ -181,7 +169,6 @@ export default function PromptDetailsPage() {
             </div>
           )}
 
-          {/* ইউজার কন্টেন্ট সিকিউরিটি টার্মিনাল - কপি বাটন মোবাইলে উপরে ফিক্সড করা হয়েছে */}
           <div className="relative rounded-xl border border-slate-800/90 bg-[#07090e] p-4 sm:p-6 md:p-8 overflow-hidden min-h-[140px] flex flex-col justify-center mb-6 sm:mb-8">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"></div>
             
@@ -199,7 +186,6 @@ export default function PromptDetailsPage() {
                 </div>
               </>
             ) : (
-              /* সাবস্ক্রিপশন ব্লক */
               <div className="text-center py-4 sm:py-6 backdrop-blur-sm relative z-20">
                 <div className="text-slate-700 font-mono text-[10px] sm:text-xs select-none blur-[4px] sm:blur-[6px] mb-4 break-all">
                   CRITICAL CODE PROTOCOL BLOCKED SUB-SYSTEM INTERACTIVE SYNTRACT DATA ENCRYPTION EXPANSION...
@@ -221,7 +207,18 @@ export default function PromptDetailsPage() {
               <div>
                 <h4 className="font-bold text-slate-200 uppercase tracking-wider mb-2 text-[10px] sm:text-[11px] text-indigo-400">// Execution Guide</h4>
                 <p className="text-slate-400 font-mono leading-relaxed text-[11px] sm:text-xs">{prompt.usageInstructions || "Deploy this syntax into target LLM environment inputs directly."}</p>
+                
+                {/* নতুন যোগ করা বাটন: ইউজার যদি প্রিমিয়াম না হয় তবে সে এখান থেকেও আপগ্রেড করতে পারবে */}
+                {!isPremiumUser && (
+                  <div className="mt-4 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                    <p className="text-amber-400 font-mono text-[10px] mb-2 uppercase tracking-wider">Want access to all Private Prompts?</p>
+                    <button onClick={() => router.push('/payment')} className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-black font-black text-[10px] py-2 px-3 rounded-lg shadow-md hover:opacity-90 transition-opacity uppercase tracking-wider">
+                      Upgrade to Premium ($5)
+                    </button>
+                  </div>
+                )}
               </div>
+              
               <div className="flex items-start gap-3 bg-slate-900/40 p-3 sm:p-4 rounded-xl border border-slate-800/60 min-w-0">
                 <div className="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-md flex items-center justify-center text-xs font-black text-white shrink-0">{prompt.creatorName ? prompt.creatorName[0].toUpperCase() : 'F'}</div>
                 <div className="min-w-0 flex-1">
@@ -234,7 +231,6 @@ export default function PromptDetailsPage() {
           )}
         </div>
 
-        {/* রিভিউ ও রেটিং ডাইনামিক ফিড */}
         {hasAccess && (
           <div className="bg-[#0f1423]/20 border border-slate-800/60 rounded-2xl p-4 sm:p-6 md:p-10 mb-6 sm:mb-10">
             <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider mb-4 sm:mb-6">// User Evaluation Logs</h3>
@@ -263,7 +259,7 @@ export default function PromptDetailsPage() {
                         {[...Array(rev.rating)].map((_, i) => <IoStar key={i} size={10} />)}
                       </div>
                     </div>
-                    <p className="text-[11px] sm:text-xs font-normal text-slate-400 font-mono leading-relaxed break-words">"{rev.comment}"</p>
+                    <p className="text-[11px] sm:text-xs font-normal text-slate-400 font-mono leading-relaxed break-words">&ldquo;{rev.comment}&rdquo;</p>
                   </div>
                 ))
               ) : (
@@ -275,7 +271,6 @@ export default function PromptDetailsPage() {
 
       </div>
 
-      {/* রিপোর্ট সাবমিশন মডাল ওভারলে */}
       {reportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-[#0f1423] border border-slate-800 w-full max-w-md rounded-2xl p-5 sm:p-6 shadow-2xl mx-2">

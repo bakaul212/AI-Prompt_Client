@@ -34,7 +34,7 @@ const Navbar = () => {
                 {/* 💻 ডেসকটপ নেভিগেশন লিংকসমূহ (মোবাইলে hidden থাকবে) */}
                 <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
                     <Link href="/" className="hover:text-indigo-400 transition-colors duration-200">Home</Link>
-                    <Link href="/all-prompts" className="hover:text-indigo-400 transition-colors duration-200">Explore</Link>
+                    <Link href="/all-prompts" className="hover:text-indigo-400 transition-colors duration-200">All-Prompts</Link>
 
                     {user ? (
                         <>
