@@ -16,25 +16,24 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 
 export default function DashboardPage() {
-  const { user, loading: authContextLoading } = useContext(AuthContext); // 👈 AuthContext থেকে loading স্টেট নেওয়া হলো
+  const { user, loading: authContextLoading } = useContext(AuthContext); // AuthContext থেকে loading স্টেট নেওয়া হলো 
   const axiosPublic = useAxiosPublic();
   const router = useRouter();
 
   // Active Tab & Responsive Mobile Menu States
   const [activeTab, setActiveTab] = useState('profile');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Dynamic User Profile States
   const [userRole, setUserRole] = useState('User');
-  const [userStatus, setUserStatus] = useState('Free'); 
+  const [userStatus, setUserStatus] = useState('Free');
   const [summary, setSummary] = useState({ totalPrompts: 0, totalCopies: 0, totalBookmarks: 0, chartData: [] });
-  
+
   // Sub-tabs Content Data States
   const [myPrompts, setMyPrompts] = useState([]);
   const [savedPrompts, setSavedPrompts] = useState([]);
   const [myReviews, setMyReviews] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true); // 👈 সিকিউরিটি রিডাইরেক্টের জন্য নতুন স্টেট
 
   // Add Prompt Form State
   const [form, setForm] = useState({
@@ -46,56 +45,59 @@ export default function DashboardPage() {
   const [editingPrompt, setEditingPrompt] = useState(null); 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // 🛡️ Route Guard Loop (নিরাপত্তা নিশ্চিত করার জন্য)
+  // 🛡️ Route Guard Logic (রিডাইরেক্ট লুপ এবং ব্ল্যাঙ্ক পেজ ক্র্যাশ হওয়া বন্ধ করবে)
   useEffect(() => {
-    if (!authContextLoading) {
-      const token = localStorage.getItem('access-token');
-      
-      // ইউজার লগইন না থাকলে অথবা লোকাল স্টোরেজে টোকেন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট হবে
-      if (!user || !user.email || !token) {
-        router.push('/login');
-      } else {
-        setAuthLoading(false); // ইউজার ভ্যালিড হলে লোডিং বন্ধ হবে
-      }
+    // যতক্ষণ ফায়ারবেস বা অথেনটিকেশন চেক কমপ্লিট না হচ্ছে, ততক্ষণ কোনো রিডাইরেক্ট অ্যাকশন নেবে না
+    if (authContextLoading) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+    
+    // ইউজার যদি লগইন না থাকে অথবা ব্রাউজারের লোকাল স্টোরেজে টোকেন না থাকে, তবেই কেবল লগইন পেজে পাঠাবে
+    if (!user || !user.email || !token) {
+      router.replace('/login'); // push এর বদলে replace ব্যবহার করা রিডাইরেকশনের জন্য বেস্ট প্র্যাকটিস
     }
   }, [user, authContextLoading, router]);
 
+  // 🔄 ডাটা ফেচিং বা বাকি API কলগুলো এখানে হবে (যদি ইউজার সাকসেসফুলি অথেনটিকেটেড থাকে)
   useEffect(() => {
-    if (user?.email) {
-      const headers = { Authorization: `Bearer ${localStorage.getItem('access-token')}` };
+    if (authContextLoading || !user?.email) return;
 
-      // ১. ইউজারের মেইন ডাটা, রোল ও সাবস্ক্রিপশন স্ট্যাটাস লোড করা
-      axiosPublic.get(`/users/role/${user.email}`, { headers })
-        .then(res => {
-          setUserRole(res.data.role || 'User');
-          setUserStatus(res.data.status || 'Free'); 
-        })
-        .catch(() => console.error("Error syncing role framework."));
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+    if (!token) return;
 
-      // ২. অ্যানালিটিক্স সামারি ও চার্ট ডাটা নেওয়া
-      axiosPublic.get(`/user-summary/${user.email}`, { headers })
-        .then(res => {
-          const defaultChartData = [
-            { name: 'Jan', copies: 4, growth: 1 },
-            { name: 'Feb', copies: 12, growth: 3 },
-            { name: 'Mar', copies: 25, growth: 8 },
-            { name: 'Apr', copies: 45, growth: 15 },
-          ];
-          setSummary({
-            totalPrompts: res.data.totalPrompts || 0,
-            totalCopies: res.data.totalCopies || 0,
-            totalBookmarks: res.data.totalBookmarks || 0,
-            chartData: res.data.chartData || defaultChartData
-          });
-        })
-        .catch(() => console.error("Error compiling system logs."));
-    }
-  }, [user, axiosPublic]);
+    const headers = { Authorization: `Bearer ${token}` };
+
+    // ১. ইউজারের মেইন ডাটা, রোল ও সাবস্ক্রিপশন স্ট্যাটাস লোড করা
+    axiosPublic.get(`/users/role/${user.email}`, { headers })
+      .then(res => {
+        setUserRole(res.data.role || 'User');
+        setUserStatus(res.data.status || 'Free'); 
+      })
+      .catch(() => console.error("Error syncing role framework."));
+
+    // ২. অ্যানালিটিক্স সামারি ও চার্ট ডাটা নেওয়া
+    axiosPublic.get(`/user-summary/${user.email}`, { headers })
+      .then(res => {
+        const defaultChartData = [
+          { name: 'Jan', copies: 4, growth: 1 },
+          { name: 'Feb', copies: 12, growth: 3 },
+          { name: 'Mar', copies: 25, growth: 8 },
+          { name: 'Apr', copies: 45, growth: 15 },
+        ];
+        setSummary({
+          totalPrompts: res.data.totalPrompts || 0,
+          totalCopies: res.data.totalCopies || 0,
+          totalBookmarks: res.data.totalBookmarks || 0,
+          chartData: res.data.chartData || defaultChartData
+        });
+      })
+      .catch(() => console.error("Error compiling system logs."));
+  }, [user, authContextLoading, axiosPublic]);
 
   // ট্যাব চেঞ্জ লজিক ও ডেটা ফেচিং
   const loadTabContent = async (tabName) => {
     setActiveTab(tabName);
-    setIsMobileMenuOpen(false); 
+    setIsMobileMenuOpen(false);
     if (!user?.email) return;
     setLoading(true);
 
@@ -113,7 +115,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Matrix data Sync Error");
-    } finally {
+    } fictionally: {
       setLoading(false);
     }
   };
@@ -130,7 +132,6 @@ export default function DashboardPage() {
     const toastId = toast.loading("Converting image into matrix data...");
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    
     reader.onload = () => {
       const base64Url = reader.result;
       if (isEdit) {
@@ -140,7 +141,6 @@ export default function DashboardPage() {
       }
       toast.update(toastId, { render: "Image compiled successfully!", type: "success", isLoading: false, autoClose: 3000 });
     };
-
     reader.onerror = () => {
       toast.update(toastId, { render: "Failed to read image structure.", type: "error", isLoading: false, autoClose: 3000 });
     };
@@ -158,12 +158,10 @@ export default function DashboardPage() {
       copyCount: 0,
       status: 'pending'
     };
-
     try {
       const res = await axiosPublic.post('/add-prompt', promptPayload, {
         headers: { Authorization: `Bearer ${localStorage.getItem('access-token')}` }
       });
-
       if (res.data.limitReached) {
         toast.error(res.data.message);
       } else if (res.data.insertedId) {
@@ -187,7 +185,6 @@ export default function DashboardPage() {
       const headers = { Authorization: `Bearer ${localStorage.getItem('access-token')}` };
       const updatedData = { ...editingPrompt, status: 'pending' }; 
       const res = await axiosPublic.put(`/prompt-update/${editingPrompt._id}`, updatedData, { headers });
-      
       if (res.data.modifiedCount > 0) {
         toast.success("Prompt architecture updated successfully.");
         setIsEditModalOpen(false);
@@ -212,7 +209,6 @@ export default function DashboardPage() {
     }
   };
 
-  // ট্যাব লিস্ট বাটন জেনারেটর (DRY Principle)
   const tabItems = [
     { id: 'profile', label: 'Dashboard Analytics', icon: <IoPersonOutline size={16} /> },
     { id: 'add-prompt', label: 'Forge New Prompt', icon: <IoAddCircleOutline size={16} /> },
@@ -221,8 +217,8 @@ export default function DashboardPage() {
     { id: 'my-reviews', label: 'Matrix Reviews', icon: <IoStarOutline size={16} /> },
   ];
 
-  // 🛡️ ইউজার ভেরিফিকেশন শেষ না হওয়া পর্যন্ত ব্ল্যাঙ্ক স্ক্রিন বা স্পিনার দেখাবে
-  if (authContextLoading || authLoading) {
+  // ⏳ ১. ফায়ারবেস অথেনটিকেশন ডাটা চেক করার সময় এই লোডিং স্ক্রিনটি লক থাকবে [cite: 183]
+  if (authContextLoading) {
     return (
       <div className="min-h-screen bg-[#0a0d14] text-slate-200 flex items-center justify-center font-mono text-xs animate-pulse">
         [VERIFYING_SECURITY_NODE_BUFFERS...]
@@ -230,6 +226,13 @@ export default function DashboardPage() {
     );
   }
 
+  // ⏳ ২. যদি ভ্যালিড ইউজার না থাকে বা লোকাল স্টোরেজে টোকেন মিসিং হয়, মেইন JSX রেন্ডার না করে এখানেই রিটার্ন নাল করবে
+  const tokenCheck = typeof window !== 'undefined' ? localStorage.getItem('access-token') : null;
+  if (!user || !user.email || !tokenCheck) {
+    return null;
+  }
+
+  // 🚀 ৩. ইউজার এবং টোকেন দুইটাই ভ্যালিড থাকলে নিচের মেইন ড্যাশবোর্ড ডাটা মাখনের মতো রেন্ডার হবে
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-200 pt-20 pb-12 px-4 sm:px-6 md:px-8 flex flex-col md:flex-row gap-6 max-w-7xl mx-auto relative">
       <ToastContainer theme="dark" />
@@ -248,11 +251,8 @@ export default function DashboardPage() {
       </div>
 
       {/* 🛠️ বাম পাশ: কন্ট্রোল প্যানেল সাইডবার */}
-      <div className={`w-full md:w-64 space-y-1.5 bg-[#0f1423]/40 border border-slate-800 p-4 rounded-2xl h-fit transition-all duration-300 md:block
-        ${isMobileMenuOpen ? 'block' : 'hidden md:block'}`}
-      >
+      <div className={`w-full md:w-64 space-y-1.5 bg-[#0f1423]/40 border border-slate-800 p-4 rounded-2xl h-fit transition-all duration-300 md:block ${isMobileMenuOpen ? 'block' : 'hidden md:block'}`}>
         <h2 className="hidden md:block text-xs font-mono uppercase tracking-wider text-slate-500 px-3 mb-4">// System Controller</h2>
-        
         {tabItems.map(item => (
           <button 
             key={item.id}
@@ -266,7 +266,6 @@ export default function DashboardPage() {
 
       {/* 🖥️ ডান পাশ: ডাইনামিক কন্টেন্ট এরিয়া */}
       <div className="flex-1 bg-[#0f1423]/20 border border-slate-800/60 rounded-2xl p-4 sm:p-6 md:p-8 backdrop-blur-md min-w-0 overflow-hidden">
-        
         {loading ? (
           <div className="text-center py-16 font-mono text-xs text-slate-500 animate-pulse">[LOAD_SYNCING_DATA_BUFFERS...]</div>
         ) : (
@@ -299,7 +298,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 📊 Recharts Charts Implementation */}
+                {/* Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
                   <div className="bg-[#07090e] p-4 rounded-xl border border-slate-800 w-full overflow-hidden">
                     <h4 className="text-xs font-mono text-slate-400 mb-4">// TOTAL COPIES OVERVIEW</h4>
@@ -344,7 +343,6 @@ export default function DashboardPage() {
             {activeTab === 'add-prompt' && (
               <form onSubmit={handleAddPrompt} className="space-y-4 max-w-3xl mx-auto">
                 <h3 className="text-sm font-bold text-white font-mono">// FORGE NEW ALGORITHMIC CORE</h3>
-                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-slate-400 uppercase">Prompt Title</label>
@@ -357,17 +355,14 @@ export default function DashboardPage() {
                     </select>
                   </div>
                 </div>
-                
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-slate-400 uppercase">Description</label>
                   <textarea required rows={2} className="w-full bg-[#07090e] border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
                 </div>
-                
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-slate-400 uppercase">Prompt Raw Content</label>
                   <textarea required rows={4} className="w-full bg-[#07090e] border border-slate-800 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-indigo-500" value={form.content} onChange={e => setForm({...form, content: e.target.value})} />
                 </div>
-                
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-[10px] font-mono text-slate-400 uppercase">Category</label>
@@ -388,7 +383,6 @@ export default function DashboardPage() {
                     </select>
                   </div>
                 </div>
-                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                   <div className="space-y-1">
                     <label className="text-[10px] font-mono text-slate-400 uppercase">Tags</label>
@@ -402,7 +396,6 @@ export default function DashboardPage() {
                     </label>
                   </div>
                 </div>
-                
                 <button type="submit" className="w-full bg-indigo-600 text-white font-mono font-bold text-xs py-3.5 rounded-xl uppercase tracking-wider hover:bg-indigo-700 transition-all active:scale-[0.99]">Submit Script to Core</button>
               </form>
             )}
@@ -508,17 +501,14 @@ export default function DashboardPage() {
                   </select>
                 </div>
               </div>
-
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-slate-400 uppercase">Description</label>
                 <textarea required rows={2} className="w-full bg-[#07090e] border border-slate-800 rounded-xl p-3 text-white" value={editingPrompt.description} onChange={e => setEditingPrompt({...editingPrompt, description: e.target.value})} />
               </div>
-
               <div className="space-y-1">
                 <label className="text-[10px] font-mono text-slate-400 uppercase">Prompt Content</label>
                 <textarea required rows={4} className="w-full bg-[#07090e] border border-slate-800 rounded-xl p-3 text-white font-mono" value={editingPrompt.content} onChange={e => setEditingPrompt({...editingPrompt, content: e.target.value})} />
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[10px] font-mono text-slate-400 uppercase">Category</label>
@@ -539,7 +529,6 @@ export default function DashboardPage() {
                   </select>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono text-slate-400 uppercase">Tags</label>
@@ -553,7 +542,6 @@ export default function DashboardPage() {
                   </label>
                 </div>
               </div>
-
               <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold py-3.5 rounded-xl uppercase tracking-wider transition-all">
                 Commit & Push Changes
               </button>
