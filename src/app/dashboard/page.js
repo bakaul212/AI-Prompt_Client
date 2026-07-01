@@ -16,8 +16,7 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 
 export default function DashboardPage() {
-  // AuthContext থেকে user এর সাথে loading স্টেটটি আনা হলো
-  const { user, loading: authLoading } = useContext(AuthContext);
+  const { user, loading: authContextLoading } = useContext(AuthContext); // 👈 AuthContext থেকে loading স্টেট নেওয়া হলো
   const axiosPublic = useAxiosPublic();
   const router = useRouter();
 
@@ -35,6 +34,7 @@ export default function DashboardPage() {
   const [savedPrompts, setSavedPrompts] = useState([]);
   const [myReviews, setMyReviews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true); // 👈 সিকিউরিটি রিডাইরেক্টের জন্য নতুন স্টেট
 
   // Add Prompt Form State
   const [form, setForm] = useState({
@@ -46,14 +46,20 @@ export default function DashboardPage() {
   const [editingPrompt, setEditingPrompt] = useState(null); 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // 🛡️ SECURITY STEP: আন-অথরাইজড ইউজার প্রোটেকশন চেক (Private Route Guard)
+  // 🛡️ Route Guard Loop (নিরাপত্তা নিশ্চিত করার জন্য)
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
+    if (!authContextLoading) {
+      const token = localStorage.getItem('access-token');
+      
+      // ইউজার লগইন না থাকলে অথবা লোকাল স্টোরেজে টোকেন না থাকলে সরাসরি লগইন পেজে রিডাইরেক্ট হবে
+      if (!user || !user.email || !token) {
+        router.push('/login');
+      } else {
+        setAuthLoading(false); // ইউজার ভ্যালিড হলে লোডিং বন্ধ হবে
+      }
     }
-  }, [user, authLoading, router]);
+  }, [user, authContextLoading, router]);
 
-  // ড্যাশবোর্ড ডেটা সিঙ্ক করার মেইন ইফেক্ট
   useEffect(() => {
     if (user?.email) {
       const headers = { Authorization: `Bearer ${localStorage.getItem('access-token')}` };
@@ -215,22 +221,15 @@ export default function DashboardPage() {
     { id: 'my-reviews', label: 'Matrix Reviews', icon: <IoStarOutline size={16} /> },
   ];
 
-  // ⏳ যখন ফায়ারবেস অথেনটিকেশন চেক হচ্ছে, তখন ফুল স্ক্রিন ব্ল্যাকার বা স্পিনার রেন্ডার হবে
-  if (authLoading) {
+  // 🛡️ ইউজার ভেরিফিকেশন শেষ না হওয়া পর্যন্ত ব্ল্যাঙ্ক স্ক্রিন বা স্পিনার দেখাবে
+  if (authContextLoading || authLoading) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-[#0a0d14] gap-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
-        <p className="text-[11px] font-mono text-slate-500 uppercase tracking-widest animate-pulse">Verifying Authentication Token...</p>
+      <div className="min-h-screen bg-[#0a0d14] text-slate-200 flex items-center justify-center font-mono text-xs animate-pulse">
+        [VERIFYING_SECURITY_NODE_BUFFERS...]
       </div>
     );
   }
 
-  // 🛑 যদি ইউজার লগইন না থাকে, তবে ড্যাশবোর্ডের কিছুই রেন্ডার হবে না
-  if (!user) {
-    return null;
-  }
-
-  // ✅ ইউজার অথরাইজড হলেই কেবল নিচের মেইন ড্যাশবোর্ড স্ক্রিন ওপেন হবে
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-200 pt-20 pb-12 px-4 sm:px-6 md:px-8 flex flex-col md:flex-row gap-6 max-w-7xl mx-auto relative">
       <ToastContainer theme="dark" />
