@@ -16,13 +16,14 @@ import {
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 
 export default function DashboardPage() {
-  const { user } = useContext(AuthContext);
+  // AuthContext থেকে user এর সাথে loading স্টেটটি আনা হলো
+  const { user, loading: authLoading } = useContext(AuthContext);
   const axiosPublic = useAxiosPublic();
   const router = useRouter();
 
   // Active Tab & Responsive Mobile Menu States
   const [activeTab, setActiveTab] = useState('profile');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // 📱 মোবাইল মেনু টগল স্টেট
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
   
   // Dynamic User Profile States
   const [userRole, setUserRole] = useState('User');
@@ -45,6 +46,14 @@ export default function DashboardPage() {
   const [editingPrompt, setEditingPrompt] = useState(null); 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // 🛡️ SECURITY STEP: আন-অথরাইজড ইউজার প্রোটেকশন চেক (Private Route Guard)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, authLoading, router]);
+
+  // ড্যাশবোর্ড ডেটা সিঙ্ক করার মেইন ইফেক্ট
   useEffect(() => {
     if (user?.email) {
       const headers = { Authorization: `Bearer ${localStorage.getItem('access-token')}` };
@@ -80,7 +89,7 @@ export default function DashboardPage() {
   // ট্যাব চেঞ্জ লজিক ও ডেটা ফেচিং
   const loadTabContent = async (tabName) => {
     setActiveTab(tabName);
-    setIsMobileMenuOpen(false); // 📱 মেনু সিলেক্ট হলে মোবাইলে প্যানেল বন্ধ হবে
+    setIsMobileMenuOpen(false); 
     if (!user?.email) return;
     setLoading(true);
 
@@ -206,11 +215,27 @@ export default function DashboardPage() {
     { id: 'my-reviews', label: 'Matrix Reviews', icon: <IoStarOutline size={16} /> },
   ];
 
+  // ⏳ যখন ফায়ারবেস অথেনটিকেশন চেক হচ্ছে, তখন ফুল স্ক্রিন ব্ল্যাকার বা স্পিনার রেন্ডার হবে
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-[#0a0d14] gap-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+        <p className="text-[11px] font-mono text-slate-500 uppercase tracking-widest animate-pulse">Verifying Authentication Token...</p>
+      </div>
+    );
+  }
+
+  // 🛑 যদি ইউজার লগইন না থাকে, তবে ড্যাশবোর্ডের কিছুই রেন্ডার হবে না
+  if (!user) {
+    return null;
+  }
+
+  // ✅ ইউজার অথরাইজড হলেই কেবল নিচের মেইন ড্যাশবোর্ড স্ক্রিন ওপেন হবে
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-200 pt-20 pb-12 px-4 sm:px-6 md:px-8 flex flex-col md:flex-row gap-6 max-w-7xl mx-auto relative">
       <ToastContainer theme="dark" />
       
-      {/* 📱 মোবাইল রেসপনসিভ মেনু বার (শুধুমাত্র ছোট স্ক্রিনে দেখা যাবে) */}
+      {/* 📱 মোবাইল রেসপনসিভ মেনু বার */}
       <div className="md:hidden w-full bg-[#0f1423]/60 border border-slate-800 p-3 rounded-xl flex items-center justify-between z-30">
         <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-400">
           // Navigation Matrix
@@ -223,7 +248,7 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* 🛠️ বাম পাশ: কন্ট্রোল প্যানেল সাইডবার (ল্যাপটপ/ডেসকটপে ফিক্সড, মোবাইলে ড্রপডাউন) */}
+      {/* 🛠️ বাম পাশ: কন্ট্রোল প্যানেল সাইডবার */}
       <div className={`w-full md:w-64 space-y-1.5 bg-[#0f1423]/40 border border-slate-800 p-4 rounded-2xl h-fit transition-all duration-300 md:block
         ${isMobileMenuOpen ? 'block' : 'hidden md:block'}`}
       >
@@ -259,7 +284,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Requirement Summary Cards - ১ কলাম (মোবাইল) ও ৩ কলাম (ট্যাব/পিসি) */}
+                {/* Requirement Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-[#07090e] p-4 sm:p-5 rounded-xl border border-slate-800/80">
                     <p className="text-[10px] font-mono text-slate-500 uppercase">Total Prompts</p>
@@ -275,9 +300,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 📊 Recharts Charts Implementation - ১ কলাম (মোবাইল) ও ২ কলাম (ডেসকটপ) */}
+                {/* 📊 Recharts Charts Implementation */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-                  {/* Chart 1: Total Copies */}
                   <div className="bg-[#07090e] p-4 rounded-xl border border-slate-800 w-full overflow-hidden">
                     <h4 className="text-xs font-mono text-slate-400 mb-4">// TOTAL COPIES OVERVIEW</h4>
                     <div className="h-56 sm:h-64 w-full text-xs">
@@ -293,7 +317,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Chart 2: Prompt Growth */}
                   <div className="bg-[#07090e] p-4 rounded-xl border border-slate-800 w-full overflow-hidden">
                     <h4 className="text-xs font-mono text-slate-400 mb-4">// PROMPT MATRIX GROWTH</h4>
                     <div className="h-56 sm:h-64 w-full text-xs">
@@ -385,7 +408,7 @@ export default function DashboardPage() {
               </form>
             )}
 
-            {/* TAB 3: MY PROMPTS LIST TABLE (With Responsive Overflow Wrap) */}
+            {/* TAB 3: MY PROMPTS LIST TABLE */}
             {activeTab === 'my-prompts' && (
               <div className="space-y-4">
                 <h3 className="text-xs font-mono text-slate-400">// DEPLOYED ARCHIVE CORE</h3>
@@ -464,7 +487,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* 📋 UPDATE PROMPT MODAL WINDOW (Ultra-Responsive Mobile Viewport Grid) */}
+      {/* 📋 UPDATE PROMPT MODAL WINDOW */}
       {isEditModalOpen && editingPrompt && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-[#0f1423] border border-slate-800 w-full max-w-2xl rounded-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
